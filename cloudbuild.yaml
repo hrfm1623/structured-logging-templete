@@ -13,16 +13,6 @@ steps:
       - 'push'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:latest'
 
-  # IAMポリシーの確認
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'projects'
-      - 'get-iam-policy'
-      - '${PROJECT_ID}'
-      - '--format=json'
-    id: 'check-iam'
-
   # Cloud Runへのデプロイ
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
@@ -60,9 +50,8 @@ steps:
       - '--http-health-check'
       - '/health'
     id: 'deploy'
-    waitFor: ['check-iam']
 
-  # IAMポリシーの設定（デプロイ完了後）
+  # IAMポリシーの設定
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
