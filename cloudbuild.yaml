@@ -44,11 +44,6 @@ steps:
       - '--set-env-vars'
       - 'NODE_ENV=production,LOG_LEVEL=${_LOG_LEVEL},USE_JSON_LOGGER=true'
       - '--no-cpu-throttling'
-      - '--min-ready-seconds'
-      - '30'
-      - '--use-http2'
-      - '--http-health-check'
-      - '/health'
     id: 'deploy'
 
   # IAMポリシーの設定
