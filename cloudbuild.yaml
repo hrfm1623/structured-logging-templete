@@ -13,6 +13,16 @@ steps:
       - 'push'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE_NAME}:latest'
 
+  # IAMポリシーの確認
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'projects'
+      - 'get-iam-policy'
+      - '${PROJECT_ID}'
+      - '--format=json'
+    id: 'check-iam'
+
   # Cloud Runへのデプロイ
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
@@ -44,6 +54,27 @@ steps:
       - '--set-env-vars'
       - 'NODE_ENV=production,LOG_LEVEL=${_LOG_LEVEL},USE_JSON_LOGGER=true'
       - '--no-cpu-throttling'
+      - '--min-ready-seconds'
+      - '30'
+      - '--use-http2'
+      - '--http-health-check'
+      - '/health'
+    id: 'deploy'
+    waitFor: ['check-iam']
+
+  # IAMポリシーの設定（デプロイ完了後）
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'services'
+      - 'add-iam-policy-binding'
+      - '${_SERVICE_NAME}'
+      - '--region=${_REGION}'
+      - '--member=allUsers'
+      - '--role=roles/run.invoker'
+    id: 'set-iam'
+    waitFor: ['deploy']
 
 substitutions:
   _REGION: asia-northeast1
