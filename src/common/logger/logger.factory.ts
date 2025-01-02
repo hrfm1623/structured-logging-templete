@@ -21,8 +21,13 @@ export class LoggerFactory {
       }),
     ];
 
-    // Google Cloud Loggingの設定が存在する場合は追加
-    if (config.projectId && config.credentials) {
+    // Cloud Run環境の場合は自動的にCloud Loggingを追加
+    if (process.env.K_SERVICE) {
+      const loggingWinston = new LoggingWinston();
+      transports.push(loggingWinston);
+    }
+    // 明示的な認証情報がある場合はそちらを使用
+    else if (config.projectId && config.credentials) {
       const loggingWinston = new LoggingWinston({
         projectId: config.projectId,
         credentials: {
