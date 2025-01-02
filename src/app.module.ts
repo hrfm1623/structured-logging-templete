@@ -9,6 +9,7 @@ import { LoggerModule } from './common/logger/logger.module';
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
+      ignoreEnvFile: process.env.NODE_ENV === 'production',
       envFilePath: ['.env'],
     }),
     LoggerModule,
