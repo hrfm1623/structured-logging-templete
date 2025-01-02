@@ -13,26 +13,21 @@ interface LoggerProvider {
 async function bootstrap() {
   try {
     console.log('Starting application...');
+    console.log('Environment:', {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT,
+      LOG_LEVEL: process.env.LOG_LEVEL,
+      USE_JSON_LOGGER: process.env.USE_JSON_LOGGER,
+      GOOGLE_CLOUD_PROJECT_ID: process.env.GOOGLE_CLOUD_PROJECT_ID,
+    });
 
     // ロガーの初期設定
     const loggerConfig = {
       level: (process.env.LOG_LEVEL as LogLevel) || 'info',
       useJson: process.env.USE_JSON_LOGGER === 'true',
-      projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-      credentials:
-        process.env.GOOGLE_CLOUD_CLIENT_EMAIL &&
-        process.env.GOOGLE_CLOUD_PRIVATE_KEY
-          ? {
-              clientEmail: process.env.GOOGLE_CLOUD_CLIENT_EMAIL,
-              privateKey: process.env.GOOGLE_CLOUD_PRIVATE_KEY.replace(
-                /\\n/g,
-                '\n',
-              ),
-            }
-          : undefined,
     };
 
-    console.log('Logger config:', { ...loggerConfig, credentials: '***' });
+    console.log('Logger config:', loggerConfig);
 
     const logger = LoggerModule.forRoot(loggerConfig);
     console.log('Logger module initialized');
@@ -57,6 +52,7 @@ async function bootstrap() {
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
     });
+    console.log('Global settings configured');
 
     // Cloud Run用のヘルスチェックエンドポイントを追加（プレフィックスなし）
     const httpAdapter = app.getHttpAdapter();
