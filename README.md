@@ -97,3 +97,163 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+# Structured Logging Template for Cloud Run
+
+NestJSを使用してCloud Runにデプロイする構造化ログ出力のテンプレートプロジェクト。
+
+## 機能
+
+- 構造化ログ出力
+- 複数のログレベル対応（ERROR, WARN, INFO, DEBUG, VERBOSE）
+- Cloud Loggingとの統合
+- 環境ごとのログレベル設定
+- JSON形式/テキスト形式の切り替え
+
+## 必要要件
+
+- Node.js 20.x
+- pnpm
+- Google Cloud SDK
+- Docker
+
+## ローカル開発環境のセットアップ
+
+1. 依存関係のインストール
+
+```bash
+pnpm install
+```
+
+2. 環境変数の設定
+
+```bash
+cp .env.example .env
+```
+
+3. 開発サーバーの起動
+
+```bash
+pnpm run start:dev
+```
+
+## Google Cloudの設定手順
+
+1. Google Cloud SDKのインストール
+
+```bash
+sudo snap install google-cloud-cli --classic
+```
+
+2. Google Cloudへのログイン
+
+```bash
+gcloud auth login
+```
+
+3. プロジェクトの作成
+
+```bash
+# プロジェクトの作成
+gcloud projects create [PROJECT_ID] --name="[PROJECT_NAME]"
+
+# プロジェクトの選択
+gcloud config set project [PROJECT_ID]
+```
+
+4. 必要なAPIの有効化
+
+```bash
+gcloud services enable cloudbuild.googleapis.com run.googleapis.com artifactregistry.googleapis.com logging.googleapis.com
+```
+
+5. Artifact Registryの設定
+
+```bash
+# リポジトリの作成
+gcloud artifacts repositories create structured-logging --repository-format=docker --location=asia-northeast1
+
+# Dockerの認証設定
+gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+```
+
+6. サービスアカウントの権限設定
+
+```bash
+# Cloud Buildサービスアカウントの権限設定
+gcloud projects add-iam-policy-binding [PROJECT_ID] \
+  --member=serviceAccount:[PROJECT_NUMBER]@cloudbuild.gserviceaccount.com \
+  --role=roles/artifactregistry.writer
+
+gcloud projects add-iam-policy-binding [PROJECT_ID] \
+  --member=serviceAccount:[PROJECT_NUMBER]@cloudbuild.gserviceaccount.com \
+  --role=roles/run.admin
+
+gcloud projects add-iam-policy-binding [PROJECT_ID] \
+  --member=serviceAccount:[PROJECT_NUMBER]@cloudbuild.gserviceaccount.com \
+  --role=roles/iam.serviceAccountUser
+
+# Cloud Runサービスアカウントの権限設定
+gcloud projects add-iam-policy-binding [PROJECT_ID] \
+  --member=serviceAccount:service-[PROJECT_NUMBER]@serverless-robot-prod.iam.gserviceaccount.com \
+  --role=roles/artifactregistry.reader
+```
+
+## デプロイ
+
+1. ローカルでのDockerビルドとテスト
+
+```bash
+pnpm run deploy:local
+```
+
+2. Cloud Runへのデプロイ
+
+```bash
+pnpm run deploy:build
+```
+
+## 環境変数
+
+| 変数名                    | 説明                               | デフォルト値 |
+| ------------------------- | ---------------------------------- | ------------ |
+| PORT                      | アプリケーションのポート番号       | 8080         |
+| NODE_ENV                  | 実行環境                           | development  |
+| LOG_LEVEL                 | ログレベル                         | info         |
+| USE_JSON_LOGGER           | JSON形式でログを出力するか         | false        |
+| GOOGLE_CLOUD_PROJECT_ID   | GCPプロジェクトID                  | -            |
+| GOOGLE_CLOUD_CLIENT_EMAIL | サービスアカウントのメールアドレス | -            |
+| GOOGLE_CLOUD_PRIVATE_KEY  | サービスアカウントの秘密鍵         | -            |
+
+## ログ出力例
+
+```typescript
+// 基本的なログ出力
+logger.log('Info message');
+logger.error('Error message');
+logger.warn('Warning message');
+logger.debug('Debug message');
+logger.verbose('Verbose message');
+
+// 構造化ログ出力
+logger.log('Info message', {
+  context: 'AppController',
+  additionalInfo: { key: 'value' },
+});
+```
+
+## ディレクトリ構造
+
+```
+.
+├── src/
+│   ├── common/
+│   │   └── logger/           # ログ関連の実装
+│   ├── app.controller.ts     # サンプルコントローラー
+│   ├── app.module.ts         # アプリケーションのルートモジュール
+│   └── main.ts              # アプリケーションのエントリーポイント
+├── .env.example             # 環境変数のテンプレート
+├── Dockerfile               # Dockerビルド設定
+├── cloudbuild.yaml          # Cloud Build設定
+└── README.md               # このファイル
+```
