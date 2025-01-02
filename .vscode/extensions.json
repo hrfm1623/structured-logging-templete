@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "streetsidesoftware.code-spell-checker",
+    "christian-kohler.path-intellisense",
+    "formulahendry.auto-rename-tag",
+    "eamodio.gitlens",
+    "ms-azuretools.vscode-docker"
+  ]
+}
