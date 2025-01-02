@@ -8,6 +8,8 @@ import { LoggerModule } from './common/logger/logger.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      cache: true,
+      envFilePath: ['.env'],
     }),
     LoggerModule,
   ],
