@@ -39,8 +39,15 @@ steps:
       - '10'
       - '--timeout'
       - '300s'
+      - '--startup-cpu-boost'
+      - '--cpu-throttling'
+      - '--execution-environment'
+      - 'gen2'
       - '--set-env-vars'
       - 'NODE_ENV=production,LOG_LEVEL=${_LOG_LEVEL},USE_JSON_LOGGER=true'
+      - '--no-cpu-throttling'
+      - '--startup-delay-seconds'
+      - '5'
 
 substitutions:
   _REGION: asia-northeast1

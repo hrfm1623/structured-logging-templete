@@ -4,10 +4,26 @@ import { LoggerModule } from './common/logger/logger.module';
 import { LogLevel } from './common/logger/logger.interface';
 import { ConfigService } from '@nestjs/config';
 import { LoggerService } from '@nestjs/common';
+import * as net from 'net';
 
 interface LoggerProvider {
   provide: string;
   useValue: LoggerService;
+}
+
+async function waitForPort(port: number, host: string): Promise<void> {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.unref();
+    server.on('error', () => {
+      setTimeout(() => {
+        waitForPort(port, host).then(resolve);
+      }, 1000);
+    });
+    server.listen(port, host, () => {
+      server.close(() => resolve());
+    });
+  });
 }
 
 async function bootstrap() {
@@ -59,6 +75,10 @@ async function bootstrap() {
     const configService = app.get(ConfigService);
     const port = configService.get<number>('PORT', 8080);
     console.log(`Port configured: ${port}`);
+
+    // ポートが利用可能になるまで待機
+    await waitForPort(port, '0.0.0.0');
+    console.log(`Port ${port} is available`);
 
     await app.listen(port, '0.0.0.0');
     console.log(`Application is running on: ${await app.getUrl()}`);
