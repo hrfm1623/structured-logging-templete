@@ -30,7 +30,11 @@ RUN pnpm install --prod --frozen-lockfile
 COPY --from=builder /app/dist ./dist
 COPY .env.example .env
 
+# ヘルスチェック用のタイムアウト設定
+ENV NODE_ENV=production \
+    PORT=8080 \
+    NESTJS_STARTUP_TIMEOUT=30000
+
 # アプリケーションの起動
-ENV NODE_ENV=production
 EXPOSE 8080
-CMD [ "node", "dist/main.js" ] 
+CMD ["node", "dist/main.js"] 
