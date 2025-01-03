@@ -109,6 +109,9 @@ NestJSを使用してCloud Runにデプロイする構造化ログ出力のテ�
 - Cloud Loggingとの統合
 - 環境ごとのログレベル設定
 - JSON形式/テキスト形式の切り替え
+- エラーオブジェクトの自動シリアライズ
+- メタデータの自動付与
+- 開発環境とCloud Run環境の自動切り替え
 
 ## 必要要件
 
@@ -225,6 +228,61 @@ pnpm run deploy:build
 | GOOGLE_CLOUD_CLIENT_EMAIL | サービスアカウントのメールアドレス | -            |
 | GOOGLE_CLOUD_PRIVATE_KEY  | サービスアカウントの秘密鍵         | -            |
 
+## ログ設定
+
+### ログレベル
+
+```typescript
+export type LogLevel =
+  | 'error' // エラーログ
+  | 'warn' // 警告ログ
+  | 'info' // 情報ログ
+  | 'http' // HTTPリクエストログ
+  | 'verbose' // 詳細ログ
+  | 'debug' // デバッグログ
+  | 'silly'; // 最も詳細なログ
+```
+
+### ログフォーマット
+
+構造化ログは以下の形式で出力されます：
+
+```json
+{
+  "timestamp": "2025-01-03T00:43:19.480Z",
+  "level": "info",
+  "message": "ログメッセージ",
+  "metadata": {
+    "context": "コンテキスト名",
+    "additionalInfo": {
+      "key": "value"
+    }
+  }
+}
+```
+
+### 環境別の動作
+
+- **Cloud Run環境**:
+
+  - Cloud Loggingトランスポートのみを使用
+  - 構造化JSONログを出力
+  - 環境ラベルを自動付与
+
+- **開発環境**:
+  - コンソールトランスポートを使用
+  - カラー付きの読みやすいフォーマットで出力
+  - デバッグ情報を詳細に表示
+
+### エラーハンドリング
+
+エラーオブジェクトは自動的にシリアライズされ、以下の情報が含まれます：
+
+- エラーメッセージ
+- スタックトレース
+- エラー名
+- 追加のメタデータ
+
 ## ログ出力例
 
 ```typescript
@@ -240,6 +298,17 @@ logger.log('Info message', {
   context: 'AppController',
   additionalInfo: { key: 'value' },
 });
+
+// エラーログ出力
+try {
+  throw new Error('Something went wrong');
+} catch (error) {
+  logger.error('Error occurred', {
+    error,
+    context: 'ErrorHandler',
+    additionalInfo: { operation: 'processData' },
+  });
+}
 ```
 
 ## ディレクトリ構造
@@ -248,12 +317,13 @@ logger.log('Info message', {
 .
 ├── src/
 │   ├── common/
-│   │   └── logger/           # ログ関連の実装
-│   ├── app.controller.ts     # サンプルコントローラー
-│   ├── app.module.ts         # アプリケーションのルートモジュール
-│   └── main.ts              # アプリケーションのエントリーポイント
-├── .env.example             # 環境変数のテンプレート
-├── Dockerfile               # Dockerビルド設定
-├── cloudbuild.yaml          # Cloud Build設定
-└── README.md               # このファイル
+│   │   └── logger/
+│   │       ├── logger.module.ts    # ロガーモジュール定義
+│   │       ├── logger.factory.ts   # ロガー生成ファクトリー
+│   │       └── logger.interface.ts # ロガー関連インターフェース
+│   ├── app.module.ts              # アプリケーションのルートモジュール
+│   └── main.ts                    # アプリケーションのエントリーポイント
+├── Dockerfile                     # Dockerビルド設定
+├── cloudbuild.yaml               # Cloud Build設定
+└── .env.example                  # 環境変数テンプレート
 ```

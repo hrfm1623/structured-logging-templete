@@ -12,44 +12,57 @@ export class LoggerFactory {
         credentials: config.credentials ? '***' : undefined,
       });
 
-      const transports: winston.transport[] = [
-        new winston.transports.Console({
-          format: config.useJson
-            ? winston.format.combine(
-                winston.format.timestamp(),
-                winston.format.json(),
-              )
-            : winston.format.combine(
-                winston.format.timestamp(),
-                winston.format.colorize(),
-                winston.format.simple(),
-              ),
-        }),
-      ];
+      const customFormat = winston.format.printf(
+        ({ level, message, timestamp, ...metadata }) => {
+          const structuredLog = {
+            timestamp,
+            level,
+            message:
+              typeof message === 'object' ? JSON.stringify(message) : message,
+            ...metadata,
+          };
+          return JSON.stringify(structuredLog);
+        },
+      );
 
-      // Cloud Run環境の場合は自動的にCloud Loggingを追加
+      const transports: winston.transport[] = [];
+
+      // Cloud Run環境の場合はCloud Loggingのみを使用
       if (process.env.K_SERVICE) {
         console.log(
-          'Detected Cloud Run environment, adding Cloud Logging transport',
+          'Detected Cloud Run environment, using Cloud Logging transport',
         );
-        const loggingWinston = new LoggingWinston();
-        transports.push(loggingWinston);
-      }
-      // 明示的な認証情報がある場合はそちらを使用
-      else if (config.projectId && config.credentials) {
-        console.log('Using explicit credentials for Cloud Logging');
         const loggingWinston = new LoggingWinston({
-          projectId: config.projectId,
-          credentials: {
-            client_email: config.credentials.clientEmail,
-            private_key: config.credentials.privateKey,
+          logName: 'winston_log',
+          prefix: config.projectId,
+          labels: {
+            environment: process.env.NODE_ENV || 'development',
           },
         });
         transports.push(loggingWinston);
+      } else {
+        // 開発環境の場合はコンソール出力を使用
+        transports.push(
+          new winston.transports.Console({
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.colorize(),
+              customFormat,
+            ),
+          }),
+        );
       }
 
       const logger = WinstonModule.createLogger({
         level: config.level,
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.errors({ stack: true }),
+          winston.format.metadata({
+            fillExcept: ['timestamp', 'level', 'message'],
+          }),
+          customFormat,
+        ),
         transports,
       });
 
@@ -67,11 +80,17 @@ export class LoggerFactory {
       // フォールバックとしてコンソールのみのロガーを返す
       return WinstonModule.createLogger({
         level: config.level,
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.errors({ stack: true }),
+          winston.format.json(),
+        ),
         transports: [
           new winston.transports.Console({
             format: winston.format.combine(
               winston.format.timestamp(),
-              winston.format.json(),
+              winston.format.colorize(),
+              winston.format.simple(),
             ),
           }),
         ],
