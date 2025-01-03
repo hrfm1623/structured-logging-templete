@@ -48,20 +48,6 @@ steps:
       - '--no-cpu-throttling'
     id: 'deploy'
 
-  # IAMポリシーの設定
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'run'
-      - 'services'
-      - 'add-iam-policy-binding'
-      - '${_SERVICE_NAME}'
-      - '--region=${_REGION}'
-      - '--member=allUsers'
-      - '--role=roles/run.invoker'
-    id: 'set-iam'
-    waitFor: ['deploy']
-
 substitutions:
   _REGION: asia-northeast1
   _REPOSITORY: structured-logging
