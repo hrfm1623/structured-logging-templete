@@ -27,10 +27,17 @@ lerna-debug.log*
 .settings/
 *.sublime-workspace
 
-# VSCode
+# IDE - VSCode
 .vscode/*
 !.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 !.vscode/extensions.json
+
+# Secret files
+key.json
+*.pem
+*.key
 
 # env files
 .env

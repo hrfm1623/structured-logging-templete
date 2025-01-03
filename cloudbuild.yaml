@@ -42,7 +42,9 @@ steps:
       - '--execution-environment'
       - 'gen2'
       - '--set-env-vars'
-      - 'NODE_ENV=production,LOG_LEVEL=${_LOG_LEVEL},USE_JSON_LOGGER=true,GOOGLE_CLOUD_PROJECT_ID=${PROJECT_ID}'
+      - 'NODE_ENV=production,LOG_LEVEL=${_LOG_LEVEL},USE_JSON_LOGGER=true,GOOGLE_CLOUD_PROJECT_ID=${PROJECT_ID},GOOGLE_CLOUD_CLIENT_EMAIL=structured-logging-sa@structured-log-001.iam.gserviceaccount.com'
+      - '--set-secrets'
+      - 'GOOGLE_CLOUD_PRIVATE_KEY=structured-logging-private-key:latest'
       - '--no-cpu-throttling'
     id: 'deploy'
 
