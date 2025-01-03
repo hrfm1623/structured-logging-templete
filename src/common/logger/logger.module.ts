@@ -21,6 +21,7 @@ export class LoggerModule {
         },
       ],
       exports: ['LOGGER', 'LOGGER_CONFIG'],
+      global: true,
     };
   }
 }
